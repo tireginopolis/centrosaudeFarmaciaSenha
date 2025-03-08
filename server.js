@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const routes = require('./routes');
+const config = require('./config/config');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,25 +17,22 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuração da sessão
+// Serve Bootstrap files from node_modules
+app.use('/bootstrap', express.static(path.join(__dirname, 'node_modules/bootstrap/dist')));
+
+// Setup view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Setup session
 app.use(session({
-    secret: "chave-secreta",  // Troque por uma chave mais segura
+    secret: config.sessionSecret,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // true apenas se usar HTTPS
+    cookie: { secure: config.isProduction }
 }));
 
-// Middleware para verificar sessão
-const checkSession = (req, res, next) => {
-    if (req.session.authenticated) {
-        next();
-    } else {
-        res.status(401).json({ success: false, message: "Acesso não autorizado!" });
-    }
-};
-
-const DATA_FILE = 'queue_backup.txt';
-const ADMIN_PASSWORD = '1234'; // Defina a senha de acesso aqui
+app.use('/', routes);
 
 // Modified queue structure to track insertion order
 let normalQueue = [];
@@ -44,37 +43,10 @@ let lastPriority = 0;
 let normalCount = 0; // Counter for normal tickets called
 let globalSequence = 0; // Global sequence counter for overall insertion order
 
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-app.get('/gerar', checkSession, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'gerar.html'));
-});
-app.get('/chamar', checkSession, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'chamar.html'));
-});
-app.get('/painel', checkSession, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'painel.html'));
-});
-app.get('/menu', checkSession, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'menu.html'));
-});
-// Rota de login
-app.post("/login", (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
-        req.session.authenticated = true;
-        res.json({ success: true, message: "Login bem-sucedido!" });
-    } else {
-        res.json({ success: false, message: "Senha incorreta!" });
-    }
-});
-
 // Carregar dados do arquivo de backup, se existir
 function loadBackup() {
-    if (fs.existsSync(DATA_FILE)) {
-        const data = fs.readFileSync(DATA_FILE, 'utf8');
+    if (fs.existsSync(config.dataFile)) {
+        const data = fs.readFileSync(config.dataFile, 'utf8');
         const parsedData = JSON.parse(data);
         normalQueue = parsedData.normalQueue || [];
         priorityQueue = parsedData.priorityQueue || [];
@@ -97,7 +69,7 @@ function saveBackup() {
         normalCount,
         globalSequence
     });
-    fs.writeFileSync(DATA_FILE, data, 'utf8');
+    fs.writeFileSync(config.dataFile, data, 'utf8');
 }
 
 // Resetar todas as filas e contadores
@@ -109,6 +81,12 @@ function resetQueues() {
     lastPriority = 0;
     normalCount = 0;
     globalSequence = 0;
+    try {
+        fs.unlinkSync(config.dataFile);
+        console.log('File was deleted successfully');
+    } catch (err) {
+        console.error('Error deleting file:', err);
+    }
     saveBackup();
     console.log('Filas e contadores resetados.');
     io.emit('queues_reset');
@@ -169,7 +147,7 @@ io.on('connection', (socket) => {
     console.log('Novo cliente conectado:', socket.id);
 
     socket.on('validate_password', (password, callback) => {
-        if (password === ADMIN_PASSWORD) {
+        if (password === config.adminPassword) {
             callback({ valid: true });
         } else {
             callback({ valid: false });
@@ -223,6 +201,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('reset_queues', () => {
+        console.log('reset data');
         resetQueues();
         sendQueueStatus();
     });

@@ -1,1 +1,0 @@
-{"normalQueue":[],"priorityQueue":[],"servedTickets":[],"lastNormal":0,"lastPriority":0,"normalCount":0,"globalSequence":0}
