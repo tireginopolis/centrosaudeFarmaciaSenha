@@ -1,0 +1,1 @@
+{"normalQueue":[],"priorityQueue":[],"servedTickets":["P1","P2","N1","P3","N2","N3"],"lastNormal":3,"lastPriority":3,"priorityCount":0}
