@@ -81,21 +81,6 @@
         }
 
         socket.emit('get_queue_status');
-
-        window.onload = function() {
-            const senhaAcesso = prompt("Digite a senha de acesso:");
-            if (senhaAcesso) {
-                socket.emit('validate_password', senhaAcesso, (resposta) => {
-                    if (!resposta.valid) {
-                        alert("Senha incorreta! Acesso negado.");
-                        window.location.href = "https://www.google.com"; // Redireciona para outro lugar
-                    }
-                });
-            } else {
-                alert("Acesso negado!");
-                window.location.href = "https://www.google.com";
-            }
-        }
     </script>
 </body>
 </html>
