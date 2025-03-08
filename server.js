@@ -3,36 +3,32 @@ const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
 const DATA_FILE = 'queue_backup.txt';
 const ADMIN_PASSWORD = '1234'; // Defina a senha de acesso aqui
 
+// Modified queue structure to track insertion order
 let normalQueue = [];
 let priorityQueue = [];
 let servedTickets = [];
 let lastNormal = 0;
 let lastPriority = 0;
-let priorityCount = 0;
+let normalCount = 0; // Counter for normal tickets called
+let globalSequence = 0; // Global sequence counter for overall insertion order
 
 // Servir a página frontend
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 app.get('/gerar', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'gerar.html'));
 });
-
 app.get('/chamar', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'chamar.html'));
 });
-
 app.get('/painel', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'painel.html'));
 });
@@ -47,13 +43,22 @@ function loadBackup() {
         servedTickets = parsedData.servedTickets || [];
         lastNormal = parsedData.lastNormal || 0;
         lastPriority = parsedData.lastPriority || 0;
-        priorityCount = parsedData.priorityCount || 0;
+        normalCount = parsedData.normalCount || 0;
+        globalSequence = parsedData.globalSequence || 0;
     }
 }
 
 // Salvar estado atual no arquivo de backup
 function saveBackup() {
-    const data = JSON.stringify({ normalQueue, priorityQueue, servedTickets, lastNormal, lastPriority, priorityCount });
+    const data = JSON.stringify({ 
+        normalQueue, 
+        priorityQueue, 
+        servedTickets, 
+        lastNormal, 
+        lastPriority, 
+        normalCount,
+        globalSequence
+    });
     fs.writeFileSync(DATA_FILE, data, 'utf8');
 }
 
@@ -64,25 +69,67 @@ function resetQueues() {
     servedTickets = [];
     lastNormal = 0;
     lastPriority = 0;
-    priorityCount = 0;
+    normalCount = 0;
+    globalSequence = 0;
     saveBackup();
     console.log('Filas e contadores resetados.');
     io.emit('queues_reset');
 }
 
+// Helper function to get next ticket respecting insertion order and 2N:1P rule
+function getNextTicket() {
+    // If both queues are empty, return null
+    if (normalQueue.length === 0 && priorityQueue.length === 0) {
+        return null;
+    }
+    
+    // If only one queue has tickets, take from that queue
+    if (normalQueue.length === 0) {
+        normalCount = 0; // Reset normal counter when serving from priority-only
+        return priorityQueue.shift();
+    }
+    if (priorityQueue.length === 0) {
+        return normalQueue.shift();
+    }
+    
+    // Get the oldest tickets from each queue
+    const oldestNormal = normalQueue[0];
+    const oldestPriority = priorityQueue[0];
+    
+    // If we've called 2 normal tickets and there's a priority ticket, call priority
+    if (normalCount >= 2) {
+        normalCount = 0; // Reset counter
+        return priorityQueue.shift();
+    }
+    
+    // Otherwise, call the ticket with the lowest sequence number (oldest)
+    if (oldestNormal.sequence < oldestPriority.sequence) {
+        normalCount++;
+        return normalQueue.shift();
+    } else {
+        normalCount = 0; // Reset normal counter when serving priority
+        return priorityQueue.shift();
+    }
+}
+
 loadBackup();
 
 function sendQueueStatus() {
+    // For the frontend, we only send the ticket IDs without the sequence info
+    const normalQueueIds = normalQueue.map(ticket => ticket.id);
+    const priorityQueueIds = priorityQueue.map(ticket => ticket.id);
+    const servedTicketIds = servedTickets.map(ticket => ticket.id);
+    
     io.emit('queue_status', {
-        waitingNormal: normalQueue,
-        waitingPriority: priorityQueue,
-        served: servedTickets.slice().reverse()
+        waitingNormal: normalQueueIds,
+        waitingPriority: priorityQueueIds,
+        served: servedTicketIds.slice().reverse()
     });
 }
 
 io.on('connection', (socket) => {
     console.log('Novo cliente conectado:', socket.id);
-
+    
     socket.on('validate_password', (password, callback) => {
         if (password === ADMIN_PASSWORD) {
             callback({ valid: true });
@@ -92,39 +139,43 @@ io.on('connection', (socket) => {
     });
 
     socket.on('generate_sea', (type) => {
-        let sea;
+        globalSequence++; // Increment global sequence for each new ticket
+        let ticketObj;
+        
         if (type === 'N') {
             lastNormal++;
-            sea = `N${lastNormal}`;
-            normalQueue.push(sea);
+            const ticketId = `N${lastNormal}`;
+            ticketObj = {
+                id: ticketId,
+                sequence: globalSequence,
+                type: 'N'
+            };
+            normalQueue.push(ticketObj);
         } else if (type === 'P') {
             lastPriority++;
-            sea = `P${lastPriority}`;
-            priorityQueue.push(sea);
+            const ticketId = `P${lastPriority}`;
+            ticketObj = {
+                id: ticketId,
+                sequence: globalSequence,
+                type: 'P'
+            };
+            priorityQueue.push(ticketObj);
         }
-        console.log(`Senha gerada: ${sea}`);
+        
+        console.log(`Senha gerada: ${ticketObj.id} (sequência: ${ticketObj.sequence})`);
         saveBackup();
-        io.emit('new_sea', sea);
+        io.emit('new_sea', ticketObj.id);
         sendQueueStatus();
     });
 
     socket.on('request_sea', () => {
-        let sea = null;
-        if (priorityCount < 2 && priorityQueue.length > 0) {
-            sea = priorityQueue.shift();
-            priorityCount++;
-        } else if (normalQueue.length > 0) {
-            sea = normalQueue.shift();
-            priorityCount = 0;
-        } else if (priorityQueue.length > 0) {
-            sea = priorityQueue.shift();
-            priorityCount = 1;
-        }
-        if (sea) {
-            servedTickets.push(sea);
-            console.log(`Senha chamada: ${sea}`);
+        const nextTicket = getNextTicket();
+        
+        if (nextTicket) {
+            servedTickets.push(nextTicket);
+            console.log(`Senha chamada: ${nextTicket.id} (sequência: ${nextTicket.sequence})`);
             saveBackup();
-            io.emit('called_sea', sea);
+            io.emit('called_sea', nextTicket.id);
             sendQueueStatus();
         }
     });

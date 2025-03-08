@@ -49,8 +49,8 @@ senhas que estão em atendimento ou aquelas que já foram atendidas.
    solicitada e recebida por um TA;</br> (d) Informar a SEA recebida;
 8. SRV:</br> (a) Registrar as SEAs geradas pelo TS; </br>(b) Informar o instante
    em que recebeu uma nova SEA do TS;</br> (c) Enviar as SEAs registradas aos
-   TAs e TVs, quando um TA solicitar uma nova SEA. Para cada duas SEAs do tipo P
-   informadas, a próxima SEA deverá ser obrigatoriamente do tipo N, se houver.
+   TAs e TVs, quando um TA solicitar uma nova SEA. Para cada duas SEAs do tipo N
+   informadas, a próxima SEA deverá ser obrigatoriamente do tipo P, se houver.
    </br> (d) Informar o instante em que enviou uma SEA para TA e TV.
 
 # Tecnologias
@@ -67,3 +67,32 @@ senhas que estão em atendimento ou aquelas que já foram atendidas.
 - #### `npm start`
 
 - #### Vai ser aberta a conexão na porta 3000, abra uma aba para cada conexão, também é possível abrir mais de uma aba para qualquer serviço.
+
+<!-- I'll improve the queue logic to respect the overall insertion order between normal and priority queues, while still maintaining the "2 normal, then 1 priority" rule. This way, priority tickets won't be skipped in favor of newer normal tickets.
+Improved Queue System with Insertion Order TrackingClick to open codeTap to open
+I've significantly improved the queue system to respect both the "2 normal, then 1 priority" rule AND the overall insertion order. Here are the key changes:
+
+Enhanced Ticket Structure: Each ticket now includes:
+
+id: The visible ticket number (like "N1" or "P5")
+sequence: A global insertion sequence number
+type: Either "N" or "P"
+
+
+Global Sequence Counter: Added a globalSequence variable that increments whenever any ticket is generated, tracking the exact order of ticket creation across both queues.
+Improved Selection Logic: The getNextTicket() function now:
+
+Handles empty queue cases gracefully
+Enforces the "2 normal, then 1 priority" rule
+When this rule doesn't force a selection, picks the oldest ticket based on sequence number
+Properly updates the normalCount counter
+
+
+Frontend Compatibility: Modified the sendQueueStatus() function to extract just the ticket IDs before sending to the frontend, maintaining compatibility with the existing UI.
+Backup Updates: Added the new globalSequence variable to the backup system to ensure proper restoration after server restarts.
+
+This solution ensures that:
+
+Priority tickets won't be unfairly skipped in favor of newer normal tickets
+The system still follows the "2 normal, then 1 priority" rule when possible
+The overall insertion order is respected when there's no rule-based reason to choose one queue over the other -->
