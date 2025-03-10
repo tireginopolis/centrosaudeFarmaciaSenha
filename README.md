@@ -118,3 +118,5 @@ O serviço será iniciado automaticamente toda vez que o Windows for ligado.
 
 - Criar atalho com argumento (para envio de notificações)
 - "C:\Program Files\Google\Chrome\Application\chrome.exe" --unsafely-treat-insecure-origin-as-secure="http://host:port"
+
+- chrome://flags/#unsafely-treat-insecure-origin-as-secure
