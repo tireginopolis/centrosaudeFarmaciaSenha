@@ -20,9 +20,12 @@
     </div>
 
     <script>
+        const host = "<%= host %>";
+        const port = "<%= port %>";
+
         async function login() {
             const password = document.getElementById("password").value;
-            const response = await fetch("http://localhost:3000/login", {
+            const response = await fetch(`http://${host}:${port}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ password })

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +8,7 @@
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
 </head>
+
 <body>
     <div class="container text-center mt-5">
         <h1 class="mb-4">Próxima Senha</h1>
@@ -34,7 +36,9 @@
                 <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
                     <table class="table table-striped">
                         <thead>
-                            <tr><th>Senha</th></tr>
+                            <tr>
+                                <th>Senha</th>
+                            </tr>
                         </thead>
                         <tbody id="tabelaNormais"></tbody>
                     </table>
@@ -45,7 +49,9 @@
                 <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
                     <table class="table table-striped">
                         <thead>
-                            <tr><th>Senha</th></tr>
+                            <tr>
+                                <th>Senha</th>
+                            </tr>
                         </thead>
                         <tbody id="tabelaPrioritarias"></tbody>
                     </table>
@@ -55,7 +61,10 @@
     </div>
 
     <script>
-        const socket = io('http://localhost:3000');
+        const host = "<%= host %>";
+        const port = "<%= port %>";
+
+        const socket = io(`http://${host}:${port}`);
         const senhaDisplay = document.getElementById('senhaDisplay');
         const chamarSenhaBtn = document.getElementById('chamarSenha');
         const tabelaAtendidos = document.getElementById('tabelaAtendidos');
@@ -83,4 +92,5 @@
         socket.emit('get_queue_status');
     </script>
 </body>
+
 </html>

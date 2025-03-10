@@ -2,39 +2,31 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const authRoutes = require('./auth');
-// const queueRoutes = require('./queue');
 const { checkSession } = require('../middleware/auth');
+const config = require('../config/config');
 
 // Auth routes
 router.use('/', authRoutes);
 
-// Queue routes (protected)
-// router.use('/queue', queueRoutes);
-
 // Page routes
 router.get('/', checkSession, (req, res) => {
-    // res.sendFile(path.join(__dirname, '../public', 'login.html'));
-    res.render('menu');
+    res.render('menu', { port: config.port, host: config.host });
 });
 
 router.get('/gerar', checkSession, (req, res) => {
-    // res.sendFile(path.join(__dirname, '../public', 'gerar.html'));
-    res.render('gerar');
+    res.render('gerar', { port: config.port, host: config.host });
 });
 
 router.get('/chamar', checkSession, (req, res) => {
-    // res.sendFile(path.join(__dirname, '../public', 'chamar.html'));
-    res.render('chamar');
+    res.render('chamar', { port: config.port, host: config.host });
 });
 
 router.get('/painel', checkSession, (req, res) => {
-    // res.sendFile(path.join(__dirname, '../public', 'painel.html'));
-    res.render('painel');
+    res.render('painel', { port: config.port, host: config.host });
 });
 
 router.get('/menu', checkSession, (req, res) => {
-    // res.sendFile(path.join(__dirname, '../public', 'menu.html'));
-    res.render('menu');
+    res.render('menu', { port: config.port, host: config.host });
 });
 
 module.exports = router;

@@ -62,7 +62,10 @@
     </div>
 
     <script>
-        const socket = io('http://localhost:3000');
+        const host = "<%= host %>";
+        const port = "<%= port %>";
+
+        const socket = io(`http://${host}:${port}`);
         const senhaDisplay = document.getElementById('senhaDisplay');
         const atendimentosTable = document.getElementById('atendimentosTable');
         const normaisTable = document.getElementById('normaisTable');
@@ -71,6 +74,7 @@
 
         socket.on('called_sea', (senha) => {
             senhaDisplay.textContent = senha;
+            enviarNotificao(senha);
             tocarSomEAnunciar(senha);
             atualizarStatus();
         });
@@ -106,6 +110,23 @@
             utterance.rate = 0.9;
             utterance.pitch = 1;
             synth.speak(utterance);
+        }
+
+        function enviarNotificao(senha) {
+            // Verifica se o navegador suporta notificações
+            if ("Notification" in window) {
+                // Pede permissão ao usuário
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        // Cria e exibe a notificação
+                        new Notification("Senha chamada", {
+                            body: `Senha: ${senha}`,
+                        });
+                    }
+                });
+            } else {
+                console.log("O navegador não suporta notificações.");
+            }
         }
 
         atualizarStatus();

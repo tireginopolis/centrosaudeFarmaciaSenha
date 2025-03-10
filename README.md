@@ -113,3 +113,8 @@ The overall insertion order is respected when there's no rule-based reason to ch
 - Clique em Install service.
 
 O serviço será iniciado automaticamente toda vez que o Windows for ligado.
+
+- Liberar porta no Firewall
+
+- Criar atalho com argumento (para envio de notificações)
+- "C:\Program Files\Google\Chrome\Application\chrome.exe" --unsafely-treat-insecure-origin-as-secure="http://host:port"

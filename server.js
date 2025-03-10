@@ -43,6 +43,6 @@ io.on('connection', (socket) => {
     queueManager.setupSocketHandlers(socket);
 });
 
-server.listen(config.port, () => {
-    console.log('Servidor rodando na porta 3000');
+server.listen(config.port, config.host, () => {
+    console.log(`Servidor rodando em http://${config.host}:${config.port}`);
 });

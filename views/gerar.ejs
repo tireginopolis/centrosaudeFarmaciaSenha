@@ -21,7 +21,10 @@
     </div>
 
     <script>
-        const socket = io('http://localhost:3000');
+        const host = "<%= host %>";
+        const port = "<%= port %>";
+
+        const socket = io(`http://${host}:${port}`);
         const normalBtn = document.getElementById('normalSenha');
         const prioritariaBtn = document.getElementById('prioritariaSenha');
         const senhaDisplay = document.getElementById('senhaDisplay');

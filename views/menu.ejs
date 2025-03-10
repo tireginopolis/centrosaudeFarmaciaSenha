@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,10 +8,11 @@
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
 </head>
+
 <body>
     <div class="container text-center mt-5">
         <h1 class="mb-4">Sistema de Atendimento</h1>
-        
+
         <div class="d-grid gap-2 col-6 mx-auto">
             <button class="btn btn-primary" onclick="redirecionar('chamar')">Chamar Senha</button>
             <button class="btn btn-secondary" onclick="redirecionar('gerar')">Gerar Senha</button>
@@ -20,7 +22,10 @@
     </div>
 
     <script>
-        const socket = io('http://localhost:3000');
+        const host = "<%= host %>";
+        const port = "<%= port %>";
+
+        const socket = io(`http://${host}:${port}`);
         
         function redirecionar(pagina) {
             window.location.href = pagina;
@@ -35,4 +40,5 @@
         }
     </script>
 </body>
+
 </html>
