@@ -96,3 +96,20 @@ This solution ensures that:
 Priority tickets won't be unfairly skipped in favor of newer normal tickets
 The system still follows the "2 normal, then 1 priority" rule when possible
 The overall insertion order is respected when there's no rule-based reason to choose one queue over the other -->
+# Criar o serviço com NSSM
+
+### Baixe e instale o NSSM:
+
+- [NSSM](https://nssm.cc/download)
+- Extraia o ZIP e copie nssm.exe (da pasta win64 ou win32) para C:\Windows\System32.
+- Crie o serviço executando no Prompt de Comando como Administrador:
+- #### `nssm install senhaFarmacia`
+- Na interface que abrir:
+- Em Path, coloque o caminho do npm.cmd, por exemplo:
+- C:\Program Files\nodejs\npm.cmd
+- Em Startup directory, coloque o caminho da pasta do seu projeto Node.js.
+- Em Arguments, digite:
+- start
+- Clique em Install service.
+
+O serviço será iniciado automaticamente toda vez que o Windows for ligado.
