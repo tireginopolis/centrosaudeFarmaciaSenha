@@ -80,36 +80,33 @@
         });
 
         socket.on('queue_status', (data) => {
-            //atualizarTabela(tabelaAtendidos, data.served);
             // Store previous row counts to compare
             const previousNormalRows = tabelaNormais.querySelectorAll('tbody tr').length;
             const previousPriorityRows = tabelaPrioritarias.querySelectorAll('tbody tr').length;
 
-            // Update the tables
             atualizarTabela(tabelaNormais, data.waitingNormal);
             atualizarTabela(tabelaPrioritarias, data.waitingPriority);
 
-            // Check if new rows were added
             const currentNormalRows = tabelaNormais.querySelectorAll('tbody tr').length;
             const currentPriorityRows = tabelaPrioritarias.querySelectorAll('tbody tr').length;
 
-            // Only send notification if rows were added to either table
             if (currentNormalRows > previousNormalRows || currentPriorityRows > previousPriorityRows) {
                 enviarNotificao();
             }
         });
 
         function atualizarTabela(elemento, dados) {
-            elemento.innerHTML = dados.map(senha => `<tr><td>${senha}</td></tr>`).join('');
+            elemento.innerHTML = dados.map(ticket => `
+                <tr>
+                    <td>${ticket.id} - ${ticket.name}</td>
+                </tr>
+            `).join('');
         }
 
         function enviarNotificao() {
-            // Verifica se o navegador suporta notificações
             if ("Notification" in window) {
-                // Pede permissão ao usuário
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
-                        // Cria e exibe a notificação
                         new Notification("Senha", {
                             body: `Senha nova na fila!`,
                         });

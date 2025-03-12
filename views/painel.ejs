@@ -91,10 +91,11 @@
 
         function atualizarTabela(tabela, dados) {
             tabela.innerHTML = '';
-            dados.forEach(senha => {
+            dados.forEach(ticket => {
+                const { id, name } = ticket;
                 let row = document.createElement('tr');
                 let cell = document.createElement('td');
-                cell.textContent = senha;
+                cell.textContent = `${id} - ${name}`;
                 row.appendChild(cell);
                 tabela.appendChild(row);
             });
@@ -113,12 +114,9 @@
         }
 
         function enviarNotificao(senha) {
-            // Verifica se o navegador suporta notificações
             if ("Notification" in window) {
-                // Pede permissão ao usuário
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
-                        // Cria e exibe a notificação
                         new Notification("Senha chamada", {
                             body: `Senha: ${senha}`,
                         });

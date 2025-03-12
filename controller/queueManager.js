@@ -114,7 +114,7 @@ class QueueManager {
     }
 
     // Generate a new ticket
-    generateTicket(type) {
+    generateTicket(type, name) {
         this.globalSequence++; // Increment global sequence for each new ticket
         let ticketObj;
 
@@ -123,6 +123,7 @@ class QueueManager {
             const ticketId = `N${this.lastNormal}`;
             ticketObj = {
                 id: ticketId,
+                name: name,
                 sequence: this.globalSequence,
                 type: 'N'
             };
@@ -132,6 +133,7 @@ class QueueManager {
             const ticketId = `P${this.lastPriority}`;
             ticketObj = {
                 id: ticketId,
+                name: name,
                 sequence: this.globalSequence,
                 type: 'P'
             };
@@ -165,14 +167,25 @@ class QueueManager {
     // Send queue status to all connected clients
     sendQueueStatus() {
         // For the frontend, we only send the ticket IDs without the sequence info
-        const normalQueueIds = this.normalQueue.map(ticket => ticket.id);
-        const priorityQueueIds = this.priorityQueue.map(ticket => ticket.id);
-        const servedTicketIds = this.servedTickets.map(ticket => ticket.id);
+        const normalQueueData = this.normalQueue.map(ticket => ({
+            id: ticket.id,
+            name: ticket.name
+        }));
+
+        const priorityQueueData = this.priorityQueue.map(ticket => ({
+            id: ticket.id,
+            name: ticket.name
+        }));
+
+        const servedTicketData = this.servedTickets.map(ticket => ({
+            id: ticket.id,
+            name: ticket.name
+        })).reverse(); // Inverte
 
         this.io.emit('queue_status', {
-            waitingNormal: normalQueueIds,
-            waitingPriority: priorityQueueIds,
-            served: servedTicketIds.slice().reverse()
+            waitingNormal: normalQueueData,
+            waitingPriority: priorityQueueData,
+            served: servedTicketData
         });
     }
 
@@ -188,8 +201,8 @@ class QueueManager {
             }
         });
 
-        socket.on('generate_sea', (type) => {
-            this.generateTicket(type);
+        socket.on('generate_sea', (parameters) => {
+            this.generateTicket(parameters.tipo, parameters.nome);
         });
 
         socket.on('request_sea', () => {
